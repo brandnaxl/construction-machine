@@ -1,0 +1,39 @@
+{
+  "aluminum_multipliers": {
+    "astral_at": 2.62,
+    "astral_as": 2.95,
+    "astral_ap": 2.5,
+    "astral_lm": 2.62, 
+    "ykk_nexta": 2.5,
+    "astral_garage":2.5
+  },
+  "glass_prices": {
+    "clear_5mm":    {"buy" : 227000, "sell" : 440000},
+    "clear_6mm":    {"buy" : 276000, "sell" : 518000},
+    "clear_8mm":    { "buy": 320000, "sell": 800000 },
+    "clear_10mm":    { "buy": 524000, "sell": 1050000 },
+    "clear_8mm_jumbo" : {"buy" : 470000, "sell": 1000000},
+    "clear_10mm_jumbo" : {"buy" : 686000, "sell": 1365000},
+    "tempered_6mm": { "buy": 613000, "sell": 1400000 },
+    "tempered_8mm": { "buy": 668000, "sell": 1500000 },
+    "dania_glass": { "buy": 1200000, "sell": 2300000 },
+    "sandblast_10mm": { "buy": 674000, "sell": 1800000 },
+    "sandblast_8mm": { "buy": 470000, "sell": 1000000 },
+    "laminated_5+5_mm" : { "buy": 750000, "sell": 1350000 },
+    "insulated_5+A10+5mm": {"buy":1200000 , "sell": 2000000}, 
+    "non_glass" : {"buy": 0 , "sell" : 0 }
+  },
+  "sealant_fees_per_m": {
+    "sealant" :60000
+  },
+  "internal_costs_per_m2":{
+    "manpower_base" : 350000,
+    "sealant_base": 60000
+  },
+  "financials":{
+    "ppn_percent" : 0.11
+  },
+  "shipping_fees": {
+    "flat_rate": 100000
+  }
+}
