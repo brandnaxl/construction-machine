@@ -2,11 +2,12 @@ import streamlit as st
 import pandas as pd
 import importlib
 import enginge2 as _eng_mod
-importlib.reload(_eng_mod)  # force fresh load so Streamlit's sys.modules cache never serves a stale signature
+importlib.reload(_eng_mod)
 from enginge2 import calculate_aluminum, analyze_profitability
 from decimal import Decimal
 import streamlit.components.v1 as components
 import time
+import company_config
 
 st.set_page_config(page_title="Angkasa Estimator", page_icon="🏗️", layout="wide")
 
@@ -306,12 +307,10 @@ st.markdown("---")
 if len(st.session_state["keranjang_proyek"]) > 0:
     st.header("3. Detail rinci & Profitabilitas Proyek")
 
-    pilihan_perusahaan = st.selectbox("🏢 Gunakan Bendera Perusahaan:", 
-                                      ["Angkasa Bangunan Jakarta", "Cahaya Kaca Kreatif", "Angkasa Bangunan", "ERI"])
-    
-    # 🟢 2. LOGIKA PAJAK: ABJ kena pajak, sisanya bebas
-    kena_ppn = True if pilihan_perusahaan == "Angkasa Bangunan Jakarta" else False
-    #Notif
+    pilihan_perusahaan = st.selectbox("🏢 Gunakan Bendera Perusahaan:",
+                                      company_config.COMPANY_NAMES)
+
+    kena_ppn = company_config.get_company(pilihan_perusahaan)["is_pkp"]
     if kena_ppn:
         st.info("ℹ️ Status PKP: Perhitungan margin otomatis dipotong setoran PPN 11%.")
     else:
