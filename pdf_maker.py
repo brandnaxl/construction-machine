@@ -3,6 +3,12 @@ import io
 import datetime
 from fpdf import FPDF
 import company_config
+from logo_utils import load_trimmed, to_bytes as _logo_bytes, pdf_logo_w
+
+_LOGO_Y    = 5    # mm from top of page
+_LOGO_H    = 16   # mm — fixed height for all logos
+_DIVIDER_Y = 26   # _LOGO_Y + _LOGO_H + 5 padding
+_CONTENT_Y = 36   # _DIVIDER_Y + 10
 
 
 class PDFMaker(FPDF):
@@ -13,18 +19,28 @@ class PDFMaker(FPDF):
         self._astral_path = company_config.ASTRAL_LOGO_PATH
 
     def header(self):
-        if self._logo_path and os.path.exists(self._logo_path):
-            self.image(self._logo_path, 10, 5, 88)
+        # Company logo — trimmed, fixed height, width auto from aspect ratio
+        co_img = load_trimmed(self._logo_path)
+        if co_img:
+            self.image(_logo_bytes(co_img), x=10, y=_LOGO_Y, h=_LOGO_H)
+        elif self._logo_path and os.path.exists(self._logo_path):
+            self.image(self._logo_path, x=10, y=_LOGO_Y, h=_LOGO_H)
 
-        if os.path.exists(self._astral_path):
-            self.image(self._astral_path, 112, 5, 88)
+        # Partner logo — trimmed, right-aligned at x=200
+        as_img = load_trimmed(self._astral_path)
+        if as_img:
+            as_w = pdf_logo_w(as_img, _LOGO_H)
+            self.image(_logo_bytes(as_img), x=200 - as_w, y=_LOGO_Y, h=_LOGO_H)
+        elif os.path.exists(self._astral_path):
+            self.image(self._astral_path, x=160, y=_LOGO_Y, h=_LOGO_H)
 
-        self.set_y(96)
+        # Divider line
+        self.set_y(_DIVIDER_Y)
         self.set_draw_color(0, 0, 0)
         self.set_line_width(1.5)
-        self.line(10, self.get_y(), 200, self.get_y())
+        self.line(10, _DIVIDER_Y, 200, _DIVIDER_Y)
         self.set_line_width(0.2)
-        self.ln(10)
+        self.set_y(_CONTENT_Y)
 
 
 def generate_quotation_pdf(keranjang, profit_analysis, client_data):

@@ -5,6 +5,9 @@ import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.drawing.image import Image as XLImage
 import company_config
+from logo_utils import load_trimmed, to_bytes as _logo_bytes, xlsx_logo_dims
+
+_TARGET_LOGO_H_PX = 50
 
 
 def _thin_border():
@@ -27,16 +30,21 @@ def _apply_merged_border(ws, cell_range):
 
 
 def _add_logo(ws, filepath, anchor):
-    """Add a logo image to the worksheet at the given cell anchor."""
-    if not filepath or not os.path.exists(filepath):
-        return
-    try:
-        xl_img = XLImage(filepath)
-        xl_img.width  = 60
-        xl_img.height = 60
+    """Load, auto-trim, and add a logo to the worksheet at target height."""
+    img_pil = load_trimmed(filepath)
+    if img_pil:
+        buf = _logo_bytes(img_pil)
+        xl_img = XLImage(buf)
+        xl_img.width, xl_img.height = xlsx_logo_dims(img_pil, _TARGET_LOGO_H_PX)
         ws.add_image(xl_img, anchor)
-    except Exception:
-        pass
+    elif filepath and os.path.exists(filepath):
+        try:
+            xl_img = XLImage(filepath)
+            xl_img.width  = 60
+            xl_img.height = 60
+            ws.add_image(xl_img, anchor)
+        except Exception:
+            pass
 
 
 def generate_quotation_xlsx(keranjang, profit_analysis, client_data):
