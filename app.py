@@ -1,6 +1,9 @@
 import streamlit as st
 import pandas as pd
-from enginge2 import calculate_aluminum, analyze_profitability # (Gua benerin typo 'enginge2' lu ya)
+import importlib
+import enginge2 as _eng_mod
+importlib.reload(_eng_mod)  # force fresh load so Streamlit's sys.modules cache never serves a stale signature
+from enginge2 import calculate_aluminum, analyze_profitability
 from decimal import Decimal
 import streamlit.components.v1 as components
 import time
