@@ -64,12 +64,24 @@ if "edit_index" not in st.session_state:
 if "scroll_up" not in st.session_state:
     st.session_state["scroll_up"] = False
 
-# Migrasi satu kali: item lama pakai width_cm/height_cm, konversi ke mm
+# Migrasi: item lama pakai width_cm/height_cm — konversi ke mm dan hitung ulang semua
 for _item in st.session_state["keranjang_proyek"]:
     _m = _item["meta"]
-    if "width_cm" in _m and "width_mm" not in _m:
-        _m["width_mm"]  = _m["width_cm"] * 10
-        _m["height_mm"] = _m["height_cm"] * 10
+    if "width_cm" in _m:  # runs for never-migrated AND previously half-migrated items
+        _w_mm = int(_m["width_cm"]) * 10
+        _h_mm = int(_m["height_cm"]) * 10
+        _m["width_mm"]  = _w_mm
+        _m["height_mm"] = _h_mm
+        _vendor = Decimal(str(_m["vendor_base_price"]))
+        _r = calculate_aluminum(_w_mm, _h_mm, _m["quantity"], _vendor, _m["glass_used"], _m["brand_used"])
+        _item["selling"] = _r["selling"]
+        _item["costing"] = _r["costing"]
+        _m["width_m"]  = _r["meta"]["width_m"]
+        _m["height_m"] = _r["meta"]["height_m"]
+        _m["area_m2"]  = _r["meta"]["area_m2"]
+        del _m["width_cm"]
+        del _m["height_cm"]
+        _m.pop("spek_custom", None)  # force regeneration with correct "NNN x NNN mm" line
 
 
 
