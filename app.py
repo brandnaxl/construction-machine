@@ -157,18 +157,19 @@ with st.container(border=True):
     with col3:
         # input harga vendor total, bukan satuan
         vendor_price_total = st.number_input("Harga Modal Vendor (TOTAL KESELURUHAN)", min_value=0, value=def_vendor_tot, step=100000)
-        # --- 🟢 FITUR BARU: SMART OVERRIDE MULTIPLIER 🟢 ---
+        # --- SMART OVERRIDE MULTIPLIER ---
         import json
         try:
             with open("pricing.json", "r") as f:
                 data_harga = json.load(f)
-            # Ambil angka default dari JSON berdasarkan brand yang lagi dipilih di col1
-            # Contoh: kalau milih 'astral_at', angka_bawaan jadi 2.85
-            angka_bawaan = data_harga["aluminum_multipliers"].get(brand, 2.2) 
+            angka_bawaan = data_harga["aluminum_multipliers"].get(brand, 2.2)
         except:
-            angka_bawaan = 2.2 # Angka jaga-jaga kalau JSON error
-            
-        # Tampilkan di UI dengan nilai default dari JSON
+            angka_bawaan = 2.2
+
+        # Edit mode: restore the multiplier that was actually used when item was saved
+        if is_edit_mode:
+            angka_bawaan = item_lama["meta"].get("multiplier_used", angka_bawaan)
+
         custom_multiplier = st.number_input("Multiplier Harga Jual (Markup)", value=float(angka_bawaan), step=0.1)
         # ----------------------------------------------------
         st.markdown("<br>", unsafe_allow_html=True)
@@ -186,7 +187,7 @@ with st.container(border=True):
                 vendor_price_satuan = Decimal(str(vendor_price_satuan))
                 
                 # Panggil mesin dengan harga satuan
-                hasil_item = calculate_aluminum(width_mm, height_mm, qty, vendor_price_satuan, glass, brand)
+                hasil_item = calculate_aluminum(width_mm, height_mm, qty, vendor_price_satuan, glass, brand, custom_multiplier)
                 hasil_item["meta"]["nama_item"] = nama_item
                 
                 if is_edit_mode:

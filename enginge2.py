@@ -14,7 +14,7 @@ def ceiling_1000(value):
     # Dibagi 1000, dibulatkan ke atas, lalu dikali 1000 lagi
     return (value / Decimal('1000')).quantize(Decimal('1'), rounding=ROUND_UP) * Decimal('1000')
 
-def calculate_aluminum(width_mm, height_mm,quantity, vendor_base_price, glass_type, brand_name):
+def calculate_aluminum(width_mm, height_mm, quantity, vendor_base_price, glass_type, brand_name, custom_multiplier=None):
     area_m2 = Decimal(width_mm) * Decimal(height_mm) / Decimal('1000000')
     area_m = Decimal('4') * (Decimal(width_mm) + Decimal(height_mm)) / Decimal('1000')
     width_m = Decimal(width_mm) / Decimal('1000')
@@ -24,16 +24,16 @@ def calculate_aluminum(width_mm, height_mm,quantity, vendor_base_price, glass_ty
     ppn_rate = Decimal(str(PRICING_DATA["financials"]["ppn_percent"]))
 
     #=======================
-    # SELLING PRICE 
+    # SELLING PRICE
     #=======================
     #1. check brand aluminum (astral ap , ykk , etc)
-    # masukin harga base vendor pake harga satuannya --> (cek) soalnya ada masalah
-    if brand_name in PRICING_DATA["aluminum_multipliers"]:
-        multiplier_value = PRICING_DATA["aluminum_multipliers"][brand_name]
-    else: 
+    if custom_multiplier is not None:
+        alum_multiplier = Decimal(str(custom_multiplier))
+    elif brand_name in PRICING_DATA["aluminum_multipliers"]:
+        alum_multiplier = Decimal(str(PRICING_DATA["aluminum_multipliers"][brand_name]))
+    else:
         print(f"WARNING : Brand '{brand_name}' not found.")
-
-    alum_multiplier = Decimal(str(multiplier_value))
+        alum_multiplier = Decimal('2.2')
     sell_alum_unit= Decimal(vendor_base_price * alum_multiplier) #harga jual alumunium
 
     #2. Kaca 
@@ -86,7 +86,8 @@ def calculate_aluminum(width_mm, height_mm,quantity, vendor_base_price, glass_ty
              "width_m": width_m,
              "height_m": height_m,
              "width_mm" : width_mm,
-             "height_mm" : height_mm
+             "height_mm" : height_mm,
+             "multiplier_used": float(alum_multiplier)
         },
         "selling": {
             "unit_price" : round(unit_selling_price,0),
