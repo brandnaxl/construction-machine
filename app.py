@@ -9,6 +9,19 @@ import streamlit.components.v1 as components
 import time
 import company_config
 
+# ── Brand display helper ──────────────────────────────────────────────────────
+_BRAND_KEYS = ["astral_ap", "astral_at", "astral_as", "astral_lm", "astral_lc", "ykk_nexta"]
+
+def format_brand(key: str) -> str:
+    """'astral_at' → 'Astral AT', 'ykk_nexta' → 'YKK Nexta'"""
+    if key.startswith("astral_"):
+        code = key[len("astral_"):].upper()
+        return f"Astral {code}"
+    if key.startswith("ykk_"):
+        return "YKK " + key[len("ykk_"):].title()
+    return key.replace("_", " ").title()
+# ─────────────────────────────────────────────────────────────────────────────
+
 st.set_page_config(page_title="Angkasa Estimator", page_icon="🏗️", layout="wide")
 
 st.title("🏗️ Angkasa Bangunan - Project Estimator")
@@ -112,7 +125,7 @@ if is_edit_mode:
     def_name = item_lama["meta"]["nama_item"]
     
     # Mapping nama ke urutan list (Biar dropdownnya pas)
-    brand_list = ["astral_ap", "astral_at", "astral_as", "astral_lm", "ykk_nexta"]
+    brand_list = _BRAND_KEYS
     glass_list = [
         "clear_5mm", "clear_6mm", "clear_8mm", "clear_10mm", 
         "clear_8mm_jumbo", "clear_10mm_jumbo", "tempered_6mm", 
@@ -144,7 +157,8 @@ with st.container(border=True):
     
     with col1:
         nama_item = st.text_input("Nama Item (Contoh: J1, PJ1)", value=def_name)
-        brand = st.selectbox("Brand Aluminum", ["astral_ap", "astral_at", "astral_as", "astral_lm", "ykk_nexta"], index=def_brand_idx)
+        brand = st.selectbox("Brand Aluminum", _BRAND_KEYS,
+                             index=def_brand_idx, format_func=format_brand)
         glass = st.selectbox("Jenis Kaca", [
             "clear_5mm", "clear_6mm", "clear_8mm", "clear_10mm", 
             "clear_8mm_jumbo", "clear_10mm_jumbo", "tempered_6mm", 
@@ -246,14 +260,14 @@ if len(st.session_state["keranjang_proyek"]) > 0:
         # --- LOGIKA KOLOM SPESIFIKASI DINAMIS ---
         if "spek_custom" not in item["meta"]:
             tipe_kaca_cantik = str(item["meta"]["glass_used"]).replace("_", " ").title()
-            brand_cantik = str(item["meta"]["brand_used"]).replace("_", " ").title()
-            # 🟢 FITUR KACA (NON GLASS OR NO): Biar bahasanya masuk akal
+            brand_display    = format_brand(item["meta"]["brand_used"])
+            product_type     = item["meta"].get("product_type", "Fixed Window")
             if item["meta"]["glass_used"] == "non_glass":
                 baris_kaca = "- Tanpa Kaca\n"
             else:
                 baris_kaca = f"- Kaca {tipe_kaca_cantik}\n"
             template_default = (
-                f"- {brand_cantik} Fixed Window\n"
+                f"- {brand_display} {product_type}\n"
                 f"- VC-03\n"
                 f"- Warna Monochromatic\n"
                 f"{baris_kaca}" #ngambil dari fitur atas. 
@@ -273,7 +287,7 @@ if len(st.session_state["keranjang_proyek"]) > 0:
             
         # --- DATA LAINNYA ---
         c[3].write(item["meta"]["quantity"])
-        c[4].write(item["meta"]["brand_used"].replace("astral_", "").upper())
+        c[4].write(format_brand(item["meta"]["brand_used"]))
         c[5].write(item["meta"]["glass_used"].replace("_"," ").upper())
         c[6].write(item["meta"]["width_m"])
         c[7].write(item["meta"]["height_m"])
