@@ -79,8 +79,8 @@ def_name = "XX"
 def_brand_idx = 1 # astral_at
 def_glass_idx = 1 # clear_8mm
 def_qty = 1
-def_w = 100
-def_h = 100
+def_w = 1000
+def_h = 1000
 def_vendor_tot = 1000000
 
 # 2. Kalau Lampu Sein Edit Nyala, Ganti Nilai Default pakai data lama
@@ -104,8 +104,8 @@ if is_edit_mode:
     def_glass_idx = glass_list.index(old_glass) if old_glass in glass_list else 1
     
     def_qty = int(item_lama["meta"]["quantity"])
-    def_w = int(item_lama["meta"]["width_cm"])
-    def_h = int(item_lama["meta"]["height_cm"])
+    def_w = int(item_lama["meta"]["width_mm"])
+    def_h = int(item_lama["meta"]["height_mm"])
     
     # Vendor total lama = harga modal satuan x qty
     def_vendor_tot = int(item_lama["meta"]["vendor_base_price"] * def_qty)
@@ -132,8 +132,8 @@ with st.container(border=True):
         
     with col2:
         qty = st.number_input("Quantity (Jumlah Lubang)", min_value=1, value=def_qty)
-        width = st.number_input("Lebar Jendela (cm)", min_value=10, value=def_w)
-        height = st.number_input("Tinggi Jendela (cm)", min_value=10, value=def_h)
+        width_mm = st.number_input("Lebar (mm)", min_value=50, max_value=6000, step=1, value=def_w)
+        height_mm = st.number_input("Tinggi (mm)", min_value=50, max_value=6000, step=1, value=def_h)
         
     with col3:
         # input harga vendor total, bukan satuan
@@ -167,7 +167,7 @@ with st.container(border=True):
                 vendor_price_satuan = Decimal(str(vendor_price_satuan))
                 
                 # Panggil mesin dengan harga satuan
-                hasil_item = calculate_aluminum(width, height, qty, vendor_price_satuan, glass, brand)
+                hasil_item = calculate_aluminum(width_mm, height_mm, qty, vendor_price_satuan, glass, brand)
                 hasil_item["meta"]["nama_item"] = nama_item
                 
                 if is_edit_mode:
@@ -231,7 +231,7 @@ if len(st.session_state["keranjang_proyek"]) > 0:
                 f"{baris_kaca}" #ngambil dari fitur atas. 
                 f"- Sealant\n"
                 f"- Instalasi\n"
-                f"Dimensi : {item['meta']['width_cm']}X{item['meta']['height_cm']}" 
+                f"Dimensi : {item['meta']['width_mm']} x {item['meta']['height_mm']} mm"
             )
             item["meta"]["spek_custom"] = template_default
 
