@@ -1,3 +1,5 @@
 streamlit
 pandas
 fpdf2
+openpyxl>=3.1.0
+Pillow>=10.0.0
