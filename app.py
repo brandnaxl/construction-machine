@@ -97,7 +97,7 @@ is_edit_mode = st.session_state["edit_index"] is not None
 edit_idx = st.session_state["edit_index"]
 
 # 1. Siapkan Nilai Default (Kosong/Standar)
-def_name = "XX"
+def_name = "PJ 1"
 def_brand_idx = 1 # astral_at
 def_glass_idx = 1 # clear_8mm
 def_qty = 1
@@ -190,9 +190,13 @@ with st.container(border=True):
                 vendor_price_satuan = Decimal(str(vendor_price_satuan))
                 
                 # Panggil mesin dengan harga satuan
-                hasil_item = calculate_aluminum(width_mm, height_mm, qty, vendor_price_satuan, glass, brand, custom_multiplier)
+                try:
+                    hasil_item = calculate_aluminum(width_mm, height_mm, qty, vendor_price_satuan, glass, brand, custom_multiplier)
+                except ValueError as _e:
+                    st.error(f"⚠️ Gagal menghitung: {_e}")
+                    st.stop()
                 hasil_item["meta"]["nama_item"] = nama_item
-                
+
                 if is_edit_mode:
                     # REPLACE (TIMPA) DATA LAMA
                     st.session_state["keranjang_proyek"][edit_idx] = hasil_item

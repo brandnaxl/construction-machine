@@ -2,8 +2,15 @@ import json
 from decimal import Decimal 
 from decimal import Decimal, ROUND_UP, ROUND_HALF_UP
 
-with open ('pricing.json', 'r')as f : 
+with open ('pricing.json', 'r')as f :
     PRICING_DATA = json.load(f)
+
+# Startup warning for any brand whose multiplier is not yet a number
+_todo_brands = [b for b, v in PRICING_DATA["aluminum_multipliers"].items()
+                if not isinstance(v, (int, float))]
+if _todo_brands:
+    print(f"[enginge2] WARNING: multiplier belum diset untuk brand: {_todo_brands}. "
+          "Masukkan nilai manual di UI.")
 
 
 def ceiling_1000(value):
@@ -30,10 +37,15 @@ def calculate_aluminum(width_mm, height_mm, quantity, vendor_base_price, glass_t
     if custom_multiplier is not None:
         alum_multiplier = Decimal(str(custom_multiplier))
     elif brand_name in PRICING_DATA["aluminum_multipliers"]:
-        alum_multiplier = Decimal(str(PRICING_DATA["aluminum_multipliers"][brand_name]))
+        raw_mult = PRICING_DATA["aluminum_multipliers"][brand_name]
+        if not isinstance(raw_mult, (int, float)):
+            raise ValueError(
+                f"Multiplier untuk brand '{brand_name}' belum diset di pricing.json "
+                f"(nilai saat ini: '{raw_mult}'). Masukkan nilai multiplier secara manual."
+            )
+        alum_multiplier = Decimal(str(raw_mult))
     else:
-        print(f"WARNING : Brand '{brand_name}' not found.")
-        alum_multiplier = Decimal('2.2')
+        raise ValueError(f"Brand tidak dikenal: '{brand_name}'")
     sell_alum_unit= Decimal(vendor_base_price * alum_multiplier) #harga jual alumunium
 
     #2. Kaca 
@@ -74,15 +86,13 @@ def calculate_aluminum(width_mm, height_mm, quantity, vendor_base_price, glass_t
     unit_base_cost = cost_alum_unit+cost_glass_unit+cost_manpower_unit+cost_sealant_unit
     total_base_cost = unit_base_cost*qty
 
-    return { 
+    return {
         "meta":{
-             "brand_used" : brand_name, 
-             "quantity" : int(qty),
-             "area_m2" : float(round(area_m2, 2)),
-             "quantity": quantity,
-             "vendor_base_price": vendor_base_price,
-             "brand_used": brand_name,    # <--- TAMBAHKAN BARIS INI
+             "brand_used" : brand_name,
              "glass_used": glass_type,
+             "quantity" : quantity,
+             "area_m2" : float(round(area_m2, 2)),
+             "vendor_base_price": vendor_base_price,
              "width_m": width_m,
              "height_m": height_m,
              "width_mm" : width_mm,
