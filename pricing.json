@@ -1,11 +1,12 @@
 {
   "aluminum_multipliers": {
+    "astral_ap": 2.5,
     "astral_at": 2.62,
     "astral_as": 2.95,
-    "astral_ap": 2.5,
-    "astral_lm": 2.62, 
+    "astral_lm": 2.62,
+    "astral_lc": "TODO_SET_MULTIPLIER",
     "ykk_nexta": 2.5,
-    "astral_garage":2.5
+    "astral_garage": 2.5
   },
   "glass_prices": {
     "clear_5mm":    {"buy" : 227000, "sell" : 440000},

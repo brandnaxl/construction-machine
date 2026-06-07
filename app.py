@@ -2,11 +2,25 @@ import streamlit as st
 import pandas as pd
 import importlib
 import enginge2 as _eng_mod
-importlib.reload(_eng_mod)  # force fresh load so Streamlit's sys.modules cache never serves a stale signature
+importlib.reload(_eng_mod)
 from enginge2 import calculate_aluminum, analyze_profitability
 from decimal import Decimal
 import streamlit.components.v1 as components
 import time
+import company_config
+
+# ── Brand display helper ──────────────────────────────────────────────────────
+_BRAND_KEYS = ["astral_ap", "astral_at", "astral_as", "astral_lm", "astral_lc", "ykk_nexta"]
+
+def format_brand(key: str) -> str:
+    """'astral_at' → 'Astral AT', 'ykk_nexta' → 'YKK Nexta'"""
+    if key.startswith("astral_"):
+        code = key[len("astral_"):].upper()
+        return f"Astral {code}"
+    if key.startswith("ykk_"):
+        return "YKK " + key[len("ykk_"):].title()
+    return key.replace("_", " ").title()
+# ─────────────────────────────────────────────────────────────────────────────
 
 st.set_page_config(page_title="Angkasa Estimator", page_icon="🏗️", layout="wide")
 
@@ -97,13 +111,20 @@ is_edit_mode = st.session_state["edit_index"] is not None
 edit_idx = st.session_state["edit_index"]
 
 # 1. Siapkan Nilai Default (Kosong/Standar)
-def_name = "XX"
+def_name = "PJ 1"
 def_brand_idx = 1 # astral_at
 def_glass_idx = 1 # clear_8mm
 def_qty = 1
 def_w = 1000
 def_h = 1000
 def_vendor_tot = 1000000
+_PRODUCT_TYPES = [
+    "Fixed Window", "Sliding Window", "Swing Window",
+    "Top Hung Window", "Side Hung Window",
+    "Sliding Door", "Swing Door",
+    "Ketik manual...",
+]
+def_product_type = "Fixed Window"
 
 # 2. Kalau Lampu Sein Edit Nyala, Ganti Nilai Default pakai data lama
 if is_edit_mode:
@@ -111,7 +132,7 @@ if is_edit_mode:
     def_name = item_lama["meta"]["nama_item"]
     
     # Mapping nama ke urutan list (Biar dropdownnya pas)
-    brand_list = ["astral_ap", "astral_at", "astral_as", "astral_lm", "ykk_nexta"]
+    brand_list = _BRAND_KEYS
     glass_list = [
         "clear_5mm", "clear_6mm", "clear_8mm", "clear_10mm", 
         "clear_8mm_jumbo", "clear_10mm_jumbo", "tempered_6mm", 
@@ -128,13 +149,23 @@ if is_edit_mode:
     def_qty = int(item_lama["meta"]["quantity"])
     def_w = int(item_lama["meta"]["width_mm"])
     def_h = int(item_lama["meta"]["height_mm"])
+    def_product_type = item_lama["meta"].get("product_type", "Fixed Window")
     
     # Vendor total lama = harga modal satuan x qty
     def_vendor_tot = int(item_lama["meta"]["vendor_base_price"] * def_qty)
 
 # 3. Tampilkan UI Formnya
 if is_edit_mode:
-    st.header(f"✏️ Edit Item: {def_name} (Baris ke-{edit_idx + 1})")
+    st.error(f"✏️ MODE EDIT — sedang mengubah baris {edit_idx + 1}: **{def_name}**. "
+             "Ini bukan input item baru.")
+    st.markdown("""
+    <style>
+    div[data-testid="stVerticalBlockBorderWrapper"] {
+        background-color: rgba(239, 68, 68, 0.06) !important;
+        border-color: rgba(239, 68, 68, 0.45) !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 else:
     st.header("1. Tambah Item Jendela/Pintu")
 
@@ -143,15 +174,25 @@ with st.container(border=True):
     
     with col1:
         nama_item = st.text_input("Nama Item (Contoh: J1, PJ1)", value=def_name)
-        brand = st.selectbox("Brand Aluminum", ["astral_ap", "astral_at", "astral_as", "astral_lm", "ykk_nexta"], index=def_brand_idx)
+        brand = st.selectbox("Brand Aluminum", _BRAND_KEYS,
+                             index=def_brand_idx, format_func=format_brand)
         glass = st.selectbox("Jenis Kaca", [
-            "clear_5mm", "clear_6mm", "clear_8mm", "clear_10mm", 
-            "clear_8mm_jumbo", "clear_10mm_jumbo", "tempered_6mm", 
-            "tempered_8mm", "dania_glass", "sandblast_10mm", 
-            "sandblast_8mm", "laminated_5+5_mm", "insulated_5+A10+5mm", 
+            "clear_5mm", "clear_6mm", "clear_8mm", "clear_10mm",
+            "clear_8mm_jumbo", "clear_10mm_jumbo", "tempered_6mm",
+            "tempered_8mm", "dania_glass", "sandblast_10mm",
+            "sandblast_8mm", "laminated_5+5_mm", "insulated_5+A10+5mm",
             "non_glass"
         ], index=def_glass_idx)
-        
+
+        _pt_default_idx = (_PRODUCT_TYPES.index(def_product_type)
+                           if def_product_type in _PRODUCT_TYPES else 0)
+        tipe_produk_sel = st.selectbox("Tipe Produk", _PRODUCT_TYPES,
+                                       index=_pt_default_idx)
+        if tipe_produk_sel == "Ketik manual...":
+            product_type = st.text_input("Ketik tipe produk:", value="")
+        else:
+            product_type = tipe_produk_sel
+
     with col2:
         qty = st.number_input("Quantity (Jumlah Lubang)", min_value=1, value=def_qty)
         width_mm = st.number_input("Lebar (mm)", min_value=50, max_value=6000, step=1, value=def_w)
@@ -190,9 +231,14 @@ with st.container(border=True):
                 vendor_price_satuan = Decimal(str(vendor_price_satuan))
                 
                 # Panggil mesin dengan harga satuan
-                hasil_item = calculate_aluminum(width_mm, height_mm, qty, vendor_price_satuan, glass, brand, custom_multiplier)
-                hasil_item["meta"]["nama_item"] = nama_item
-                
+                try:
+                    hasil_item = calculate_aluminum(width_mm, height_mm, qty, vendor_price_satuan, glass, brand, custom_multiplier)
+                except ValueError as _e:
+                    st.error(f"⚠️ Gagal menghitung: {_e}")
+                    st.stop()
+                hasil_item["meta"]["nama_item"]    = nama_item
+                hasil_item["meta"]["product_type"] = product_type or "Fixed Window"
+
                 if is_edit_mode:
                     # REPLACE (TIMPA) DATA LAMA
                     st.session_state["keranjang_proyek"][edit_idx] = hasil_item
@@ -206,7 +252,7 @@ with st.container(border=True):
                 
         with col_btn2:
             if is_edit_mode:
-                if st.button("❌ Batal"):
+                if st.button("❌ Batal Edit", type="secondary", use_container_width=True):
                     st.session_state["edit_index"] = None
                     st.rerun()
 
@@ -241,14 +287,14 @@ if len(st.session_state["keranjang_proyek"]) > 0:
         # --- LOGIKA KOLOM SPESIFIKASI DINAMIS ---
         if "spek_custom" not in item["meta"]:
             tipe_kaca_cantik = str(item["meta"]["glass_used"]).replace("_", " ").title()
-            brand_cantik = str(item["meta"]["brand_used"]).replace("_", " ").title()
-            # 🟢 FITUR KACA (NON GLASS OR NO): Biar bahasanya masuk akal
+            brand_display    = format_brand(item["meta"]["brand_used"])
+            product_type     = item["meta"].get("product_type", "Fixed Window")
             if item["meta"]["glass_used"] == "non_glass":
                 baris_kaca = "- Tanpa Kaca\n"
             else:
                 baris_kaca = f"- Kaca {tipe_kaca_cantik}\n"
             template_default = (
-                f"- {brand_cantik} Fixed Window\n"
+                f"- {brand_display} {product_type}\n"
                 f"- VC-03\n"
                 f"- Warna Monochromatic\n"
                 f"{baris_kaca}" #ngambil dari fitur atas. 
@@ -268,7 +314,7 @@ if len(st.session_state["keranjang_proyek"]) > 0:
             
         # --- DATA LAINNYA ---
         c[3].write(item["meta"]["quantity"])
-        c[4].write(item["meta"]["brand_used"].replace("astral_", "").upper())
+        c[4].write(format_brand(item["meta"]["brand_used"]))
         c[5].write(item["meta"]["glass_used"].replace("_"," ").upper())
         c[6].write(item["meta"]["width_m"])
         c[7].write(item["meta"]["height_m"])
@@ -287,6 +333,21 @@ if len(st.session_state["keranjang_proyek"]) > 0:
                     st.session_state["edit_index"] = None
                 st.rerun()
 
+    # --- ROW REORDER ---
+    n_items = len(st.session_state["keranjang_proyek"])
+    if n_items > 1:
+        st.markdown("**Pindahkan baris:**")
+        _rc1, _rc2, _rc3 = st.columns([2, 2, 1])
+        _from = _rc1.selectbox("Dari baris", list(range(1, n_items + 1)),
+                               format_func=lambda x: f"Baris {x}", key="reorder_from")
+        _to   = _rc2.selectbox("Ke posisi", list(range(1, n_items + 1)),
+                               format_func=lambda x: f"Posisi {x}", key="reorder_to")
+        if _rc3.button("Pindahkan", use_container_width=True):
+            _cart = st.session_state["keranjang_proyek"]
+            _item = _cart.pop(_from - 1)
+            _cart.insert(_to - 1, _item)
+            st.rerun()
+
     if st.button("🗑️ Kosongkan Seluruh Keranjang", type="secondary"):
         st.session_state["keranjang_proyek"] = []
         st.session_state["edit_index"] = None
@@ -302,12 +363,10 @@ st.markdown("---")
 if len(st.session_state["keranjang_proyek"]) > 0:
     st.header("3. Detail rinci & Profitabilitas Proyek")
 
-    pilihan_perusahaan = st.selectbox("🏢 Gunakan Bendera Perusahaan:", 
-                                      ["Angkasa Bangunan Jakarta", "Cahaya Kaca Kreatif", "Angkasa Bangunan", "ERI"])
-    
-    # 🟢 2. LOGIKA PAJAK: ABJ kena pajak, sisanya bebas
-    kena_ppn = True if pilihan_perusahaan == "Angkasa Bangunan Jakarta" else False
-    #Notif
+    pilihan_perusahaan = st.selectbox("🏢 Gunakan Bendera Perusahaan:",
+                                      company_config.COMPANY_NAMES)
+
+    kena_ppn = company_config.get_company(pilihan_perusahaan)["is_pkp"]
     if kena_ppn:
         st.info("ℹ️ Status PKP: Perhitungan margin otomatis dipotong setoran PPN 11%.")
     else:
