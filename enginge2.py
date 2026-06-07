@@ -14,11 +14,11 @@ def ceiling_1000(value):
     # Dibagi 1000, dibulatkan ke atas, lalu dikali 1000 lagi
     return (value / Decimal('1000')).quantize(Decimal('1'), rounding=ROUND_UP) * Decimal('1000')
 
-def calculate_aluminum(width_cm, height_cm,quantity, vendor_base_price, glass_type, brand_name):
-    width_m = Decimal(width_cm) / Decimal(100)
-    height_m = Decimal(height_cm) / Decimal(100) 
-    area_m2 = width_m * height_m
-    area_m = (Decimal('4')*width_m)+(Decimal('4')*height_m)
+def calculate_aluminum(width_mm, height_mm,quantity, vendor_base_price, glass_type, brand_name):
+    area_m2 = Decimal(width_mm) * Decimal(height_mm) / Decimal('1000000')
+    area_m = Decimal('4') * (Decimal(width_mm) + Decimal(height_mm)) / Decimal('1000')
+    width_m = Decimal(width_mm) / Decimal('1000')
+    height_m = Decimal(height_mm) / Decimal('1000')
     qty = Decimal(quantity)
     vendor_base_unit = Decimal(vendor_base_price)
     ppn_rate = Decimal(str(PRICING_DATA["financials"]["ppn_percent"]))
@@ -85,8 +85,8 @@ def calculate_aluminum(width_cm, height_cm,quantity, vendor_base_price, glass_ty
              "glass_used": glass_type,
              "width_m": width_m,
              "height_m": height_m,
-             "width_cm" : width_cm,
-             "height_cm" : height_cm
+             "width_mm" : width_mm,
+             "height_mm" : height_mm
         },
         "selling": {
             "unit_price" : round(unit_selling_price,0),
