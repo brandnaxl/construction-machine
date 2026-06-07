@@ -59,10 +59,17 @@ if "keranjang_proyek" not in st.session_state:
     st.session_state["keranjang_proyek"] = []
 # Bikin "Lampu Sein" untuk mendeteksi lagi mode nambah atau mode ngedit
 if "edit_index" not in st.session_state:
-    st.session_state["edit_index"] = None 
+    st.session_state["edit_index"] = None
 # Memori buat n-trigger scroll ke atas
 if "scroll_up" not in st.session_state:
     st.session_state["scroll_up"] = False
+
+# Migrasi satu kali: item lama pakai width_cm/height_cm, konversi ke mm
+for _item in st.session_state["keranjang_proyek"]:
+    _m = _item["meta"]
+    if "width_cm" in _m and "width_mm" not in _m:
+        _m["width_mm"]  = _m["width_cm"] * 10
+        _m["height_mm"] = _m["height_cm"] * 10
 
 
 
