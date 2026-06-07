@@ -118,6 +118,13 @@ def_qty = 1
 def_w = 1000
 def_h = 1000
 def_vendor_tot = 1000000
+_PRODUCT_TYPES = [
+    "Fixed Window", "Sliding Window", "Swing Window",
+    "Top Hung Window", "Side Hung Window",
+    "Sliding Door", "Swing Door",
+    "Ketik manual...",
+]
+def_product_type = "Fixed Window"
 
 # 2. Kalau Lampu Sein Edit Nyala, Ganti Nilai Default pakai data lama
 if is_edit_mode:
@@ -142,6 +149,7 @@ if is_edit_mode:
     def_qty = int(item_lama["meta"]["quantity"])
     def_w = int(item_lama["meta"]["width_mm"])
     def_h = int(item_lama["meta"]["height_mm"])
+    def_product_type = item_lama["meta"].get("product_type", "Fixed Window")
     
     # Vendor total lama = harga modal satuan x qty
     def_vendor_tot = int(item_lama["meta"]["vendor_base_price"] * def_qty)
@@ -160,13 +168,22 @@ with st.container(border=True):
         brand = st.selectbox("Brand Aluminum", _BRAND_KEYS,
                              index=def_brand_idx, format_func=format_brand)
         glass = st.selectbox("Jenis Kaca", [
-            "clear_5mm", "clear_6mm", "clear_8mm", "clear_10mm", 
-            "clear_8mm_jumbo", "clear_10mm_jumbo", "tempered_6mm", 
-            "tempered_8mm", "dania_glass", "sandblast_10mm", 
-            "sandblast_8mm", "laminated_5+5_mm", "insulated_5+A10+5mm", 
+            "clear_5mm", "clear_6mm", "clear_8mm", "clear_10mm",
+            "clear_8mm_jumbo", "clear_10mm_jumbo", "tempered_6mm",
+            "tempered_8mm", "dania_glass", "sandblast_10mm",
+            "sandblast_8mm", "laminated_5+5_mm", "insulated_5+A10+5mm",
             "non_glass"
         ], index=def_glass_idx)
-        
+
+        _pt_default_idx = (_PRODUCT_TYPES.index(def_product_type)
+                           if def_product_type in _PRODUCT_TYPES else 0)
+        tipe_produk_sel = st.selectbox("Tipe Produk", _PRODUCT_TYPES,
+                                       index=_pt_default_idx)
+        if tipe_produk_sel == "Ketik manual...":
+            product_type = st.text_input("Ketik tipe produk:", value="")
+        else:
+            product_type = tipe_produk_sel
+
     with col2:
         qty = st.number_input("Quantity (Jumlah Lubang)", min_value=1, value=def_qty)
         width_mm = st.number_input("Lebar (mm)", min_value=50, max_value=6000, step=1, value=def_w)
@@ -210,7 +227,8 @@ with st.container(border=True):
                 except ValueError as _e:
                     st.error(f"⚠️ Gagal menghitung: {_e}")
                     st.stop()
-                hasil_item["meta"]["nama_item"] = nama_item
+                hasil_item["meta"]["nama_item"]    = nama_item
+                hasil_item["meta"]["product_type"] = product_type or "Fixed Window"
 
                 if is_edit_mode:
                     # REPLACE (TIMPA) DATA LAMA
