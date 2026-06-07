@@ -333,6 +333,21 @@ if len(st.session_state["keranjang_proyek"]) > 0:
                     st.session_state["edit_index"] = None
                 st.rerun()
 
+    # --- ROW REORDER ---
+    n_items = len(st.session_state["keranjang_proyek"])
+    if n_items > 1:
+        st.markdown("**Pindahkan baris:**")
+        _rc1, _rc2, _rc3 = st.columns([2, 2, 1])
+        _from = _rc1.selectbox("Dari baris", list(range(1, n_items + 1)),
+                               format_func=lambda x: f"Baris {x}", key="reorder_from")
+        _to   = _rc2.selectbox("Ke posisi", list(range(1, n_items + 1)),
+                               format_func=lambda x: f"Posisi {x}", key="reorder_to")
+        if _rc3.button("Pindahkan", use_container_width=True):
+            _cart = st.session_state["keranjang_proyek"]
+            _item = _cart.pop(_from - 1)
+            _cart.insert(_to - 1, _item)
+            st.rerun()
+
     if st.button("🗑️ Kosongkan Seluruh Keranjang", type="secondary"):
         st.session_state["keranjang_proyek"] = []
         st.session_state["edit_index"] = None
