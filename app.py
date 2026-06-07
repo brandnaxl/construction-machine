@@ -156,7 +156,16 @@ if is_edit_mode:
 
 # 3. Tampilkan UI Formnya
 if is_edit_mode:
-    st.header(f"✏️ Edit Item: {def_name} (Baris ke-{edit_idx + 1})")
+    st.error(f"✏️ MODE EDIT — sedang mengubah baris {edit_idx + 1}: **{def_name}**. "
+             "Ini bukan input item baru.")
+    st.markdown("""
+    <style>
+    div[data-testid="stVerticalBlockBorderWrapper"] {
+        background-color: rgba(239, 68, 68, 0.06) !important;
+        border-color: rgba(239, 68, 68, 0.45) !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 else:
     st.header("1. Tambah Item Jendela/Pintu")
 
@@ -243,7 +252,7 @@ with st.container(border=True):
                 
         with col_btn2:
             if is_edit_mode:
-                if st.button("❌ Batal"):
+                if st.button("❌ Batal Edit", type="secondary", use_container_width=True):
                     st.session_state["edit_index"] = None
                     st.rerun()
 
