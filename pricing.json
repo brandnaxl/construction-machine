@@ -11,7 +11,7 @@
   "glass_prices": {
     "clear_5mm":    {"buy" : 227000, "sell" : 440000},
     "clear_6mm":    {"buy" : 276000, "sell" : 518000},
-    "clear_8mm":    { "buy": 320000, "sell": 800000 },
+    "clear_8mm":    { "buy": 300000, "sell": 495000 },
     "clear_10mm":    { "buy": 524000, "sell": 1050000 },
     "clear_8mm_jumbo" : {"buy" : 470000, "sell": 1000000},
     "clear_10mm_jumbo" : {"buy" : 686000, "sell": 1365000},
